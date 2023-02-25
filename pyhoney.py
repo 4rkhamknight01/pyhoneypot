@@ -1,13 +1,13 @@
 import socket
 import atexit
 
-# Local IP/Port for the honeypot to listen on (SSH and HTTP)
+# Local IP/Port for the honeypot to listen on (SSH, HTTP and FTP)
 LHOST = '0.0.0.0'
 LSSH = 22
 LHTTP = 80
 LFTP = 21
 
-# Remote IP/Port to send the log data to (TCP)
+# Remote IP/Port to send the log data to
 RHOST = '10.12.35.62'
 RPORT = 9000
 
@@ -19,19 +19,22 @@ TIMEOUT = int(10)
 
 listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+#these functions start the honeypot servers on HTTP, SSH and FTP ports of your computer binds to the given IP and localhost given by you.
 def http():
     print('[*] Honeypot starting on ' + LHOST + ':' + str(LHTTP))
     atexit.register(exit_handler)
     listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     listener.bind((LHOST, LHTTP))
     listener.listen(5)
+    #setting up a listener to listen on incoming connections
     while True:
         (insock, address) = listener.accept()
         insock.settimeout(TIMEOUT)
         print('[*] Connection from : ' + address[0] + ':' + str(address[1]) + ' on port ' + str(LHTTP))
         try:
-            insock.send(BANNER)
+            insock.send(BANNER.encode())
             data = insock.recv(1024)
+            #encoding the data going out from the server side 
         except socket.error as e:
             sendlogHTTP(address[0], 'Error ' + str(e))
         else:
@@ -50,7 +53,7 @@ def ssh():
         insock.settimeout(TIMEOUT)
         print('[*] Connection from : ' + address[0] + ':' + str(address[1]) + ' on port ' + str(LSSH))
         try:
-            insock.send(BANNER)
+            insock.send(BANNER.encode())
             data = insock.recv(1024)
         except socket.error as e:
             sendlogSSH(address[0], 'Error ' + str(e))
@@ -70,7 +73,7 @@ def ftp():
         insock.settimeout(TIMEOUT)
         print('[*] Connection from : ' + address[0] + ':' + str(address[1]) + ' on port ' + str(LFTP))
         try:
-            insock.send(BANNER)
+            insock.send(BANNER.encode())
             data = insock.recv(1024)
         except socket.error as e:
             sendlogFTP(address[0], 'Error ' + str(e))
